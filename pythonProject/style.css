@@ -1,0 +1,36 @@
+body{
+    background-image: url("https://toppng.com/public/uploads/preview/code-letters-screen-blur-11570177813mgurt9n5uy.jpg");
+    background-repeat: repeat;
+    background-size: 50%;
+}
+main {
+    grid-template-columns: 2% 94% 2%; 
+    display: grid;
+    width: 80%;
+	height:100%;
+    margin: auto;
+    background: #fff;
+    padding: 100px 0px;
+}
+
+button{
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+form {
+	grid-column-start: 2;
+    grid-column-end: 3;
+	display: flex;
+	flex-direction: column;
+}
+
+input
+{
+	margin: 2px;
+}
+
+#link
+{
+	display:block;
+}

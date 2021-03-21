@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# updatemem v2018.2 (64-bit)
+# SW Build 2258646 on Thu Jun 14 20:03:12 MDT 2018
+# 
+# Start of session at: Thu Dec 17 14:27:24 2020
+# Process ID: 20460
+# Current directory: D:/Facultate/SSC_Proiect/SSC_ESP32
+# Command line: updatemem.exe -mode batch -source D:/Xilinx/SDK/2018.2/scripts/updatemem/main.tcl -notrace -tclargs -meminfo D:/Facultate/SSC_Proiect/SSC_ESP32/SSC_ESP32.sdk/design_1_wrapper_hw_platform_0/design_1_wrapper.mmi -data D:/Xilinx/SDK/2018.2/data/embeddedsw/lib/microblaze/mb_bootloop_le.elf -proc design_1_i/microblaze_0 -bit D:/Facultate/SSC_Proiect/SSC_ESP32/SSC_ESP32.sdk/design_1_wrapper_hw_platform_0/design_1_wrapper.bit -out D:/Facultate/SSC_Proiect/SSC_ESP32/SSC_ESP32.sdk/design_1_wrapper_hw_platform_0/download.bit -force
+# Log file: D:/Facultate/SSC_Proiect/SSC_ESP32/updatemem.log
+# Journal file: D:/Facultate/SSC_Proiect/SSC_ESP32\updatemem.jou
+#-----------------------------------------------------------
+source D:/Xilinx/SDK/2018.2/scripts/updatemem/main.tcl -notrace

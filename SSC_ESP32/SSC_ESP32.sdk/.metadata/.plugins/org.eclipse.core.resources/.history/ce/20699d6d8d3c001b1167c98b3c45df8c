@@ -1,0 +1,216 @@
+//AXI GPIO driver
+#include "xgpio.h"
+
+//send data over UART
+#include "xil_printf.h"
+
+//information about AXI peripherals
+#include "xparameters.h"
+
+#include "sleep.h"
+#include "PmodESP32.h"
+
+#ifdef __MICROBLAZE__
+#define HOST_UART_DEVICE_ID XPAR_AXI_UARTLITE_0_BASEADDR
+#define HostUart XUartLite
+#define HostUart_Config XUartLite_Config
+#define HostUart_CfgInitialize XUartLite_CfgInitialize
+#define HostUart_LookupConfig XUartLite_LookupConfig
+#define HostUart_Recv XUartLite_Recv
+#define HostUartConfig_GetBaseAddr(CfgPtr) (CfgPtr->RegBaseAddr)
+#include "xuartlite.h"
+#include "xil_cache.h"
+#else
+#define HOST_UART_DEVICE_ID XPAR_PS7_UART_1_DEVICE_ID
+#define HostUart XUartPs
+#define HostUart_Config XUartPs_Config
+#define HostUart_CfgInitialize XUartPs_CfgInitialize
+#define HostUart_LookupConfig XUartPs_LookupConfig
+#define HostUart_Recv XUartPs_Recv
+#define HostUartConfig_GetBaseAddr(CfgPtr) (CfgPtr->BaseAddress)
+#include "xuartps.h"
+#endif
+
+#define PMODESP32_UART_BASEADDR XPAR_PMODESP32_0_AXI_LITE_UART_BASEADDR
+#define PMODESP32_GPIO_BASEADDR XPAR_PMODESP32_0_AXI_LITE_GPIO_BASEADDR
+
+HostUart myHostUart;
+PmodESP32 myESP32;
+
+u8 recv_buffer;
+u32 num_received;
+
+
+#define RX_BUF_SIZE     512
+
+void EnableCaches();
+void DisableCaches();
+void DemoInitialize();
+void checkAT();
+void getDeviceInfo();
+
+void DemoInitialize () {
+	HostUart_Config *CfgPtr;
+	EnableCaches();
+	ESP32_Initialize(&myESP32, PMODESP32_UART_BASEADDR, PMODESP32_GPIO_BASEADDR);
+	CfgPtr = HostUart_LookupConfig(HOST_UART_DEVICE_ID);
+	HostUart_CfgInitialize(&myHostUart, CfgPtr, HostUartConfig_GetBaseAddr(CfgPtr));
+}
+
+
+int main()
+{
+	DemoInitialize ();
+	checkAT();
+	sleep(5);
+	getDeviceInfo();
+	sleep(5);
+
+
+	XGpio gpio;
+	u32 btn, led;
+
+	XGpio_Initialize(&gpio, 0);
+
+	XGpio_SetDataDirection(&gpio, 2, 0x00000000); // set LED GPIO channel tristates to All Output
+	XGpio_SetDataDirection(&gpio, 1, 0xFFFFFFFF); // set BTN GPIO channel tristates to All Input
+
+	while (1)
+	{
+		btn = XGpio_DiscreteRead(&gpio, 1);
+
+		if (btn == 1)
+		{
+			led = 0x0000000F;
+			//checkAT();
+		}
+		else if (btn == 2)
+		{
+			led = 0xF0000000;
+			//getDeviceInfo();
+		}
+		else
+			led = 0x00000000;
+
+		XGpio_DiscreteWrite(&gpio, 2, led);
+
+		//xil_printf("\rbutton state: %08x", btn);
+
+		//num_received = HostUart_Recv(&myHostUart, &recv_buffer, 1);
+		//		if (num_received > 0) {
+		//			xil_printf("%c", recv_buffer);
+		//				while (0 == ESP32_Send(&myESP32, &recv_buffer, 1));
+		//		}
+
+		//num_received = ESP32_Recv(&myESP32, &recv_buffer, 1);
+		//if (num_received > 0) {
+		//	xil_printf("%c", recv_buffer);
+		//}
+
+	}
+}
+
+int establishSSLConnection(char * remoteIP, int remotePort) {
+   // printString("Attempting to establish SSL connection...\r\n");
+    //char tx[200];
+  //  sprintf(tx, "AT+CIPSTART=\"SSL\",\"%s\",%d\r\n", remoteIP, remotePort);
+   // sendToESP(tx);
+
+
+
+    // delayMS(500);
+    /*char rx[RX_BUF_SIZE];
+    char * cur = rx;
+    while(UART1_ReceiveBufferSizeGet() < 512) {
+        *cur++ = UART1_Read();
+
+    }
+
+    *cur = '\0';
+    char * connect;
+    connect = strstr(rx, "CONNECT");
+    if(NULL == connect) {
+        return -1;
+    }
+
+    printString(rx);*/
+    return 0;
+}
+
+
+void sendToESP(char * string) {
+    u32 i = 0;
+    u32 length = strlen(string);
+    u32 num = 0;
+    while (length > 0) {
+        num = ESP32_Send(&myESP32, &string[i], 1);
+        i += num;
+        length -= num;
+    }
+}
+
+void checkAT() {
+    char tx[] = "AT\r\n";
+    sendToESP(tx);
+    //delayMS(5);
+    usleep(5);
+    //while(!(UART1_StatusGet() & UART1_RECEIVER_IDLE )) {
+    //       // Wait for the data to fill the RX buffer
+    //}
+    char rx[RX_BUF_SIZE];
+    int i = 0 ;
+    while(ESP32_Recv(&myESP32, &recv_buffer, 1) > 0)
+    {
+           rx[i++] = (char ) recv_buffer;
+    }
+
+    rx[i] = '\n';
+    xil_printf("%s", rx);
+
+
+}
+
+void EnableCaches() {
+#ifdef __MICROBLAZE__
+#ifdef XPAR_MICROBLAZE_USE_DCACHE
+   Xil_DCacheEnable();
+#endif
+#ifdef XPAR_MICROBLAZE_USE_ICACHE
+   Xil_ICacheEnable();
+#endif
+#endif
+}
+
+void DisableCaches() {
+#ifdef __MICROBLAZE__
+#ifdef XPAR_MICROBLAZE_USE_DCACHE
+   Xil_DCacheDisable();
+#endif
+#ifdef XPAR_MICROBLAZE_USE_ICACHE
+   Xil_ICacheDisable();
+#endif
+#endif
+}
+
+void getDeviceInfo() {
+	xil_printf("Getting Device Info...\r\n");
+    char tx[] = "AT+GMR\r\n";
+    sendToESP(tx);
+    //delayMS(50);
+    usleep(50);
+
+    //while(!(UART1_StatusGet() & UART1_RECEIVER_IDLE )) {
+           // Wait for the data to fill the RX buffer
+    //}
+
+    char rx[RX_BUF_SIZE];
+        int i = 0 ;
+        while(ESP32_Recv(&myESP32, &recv_buffer, 1) > 0)
+        {
+               rx[i++] = (char ) recv_buffer;
+        }
+
+        rx[i] = '\n';
+        xil_printf("%s", rx);
+
+}
